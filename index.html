@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farhan Editor — YouTube & Graphic Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ───────────────────────────────────────────────
+       TOKENS
+    ─────────────────────────────────────────────── */
+    :root {
+      --ink:        #050c18;
+      --navy:       #091628;
+      --deep:       #0d2240;
+      --mid:        #1a3a5e;
+      --steel:      #2a5080;
+      --accent:     #3a7bd5;
+      --glow:       #5b9ef5;
+      --sky:        #a8c8f8;
+      --white:      #f0f6ff;
+      --muted:      #8aafd4;
+      --dim:        #3d607d;
+
+      --font-display: 'Syne', sans-serif;
+      --font-body:    'Space Grotesk', sans-serif;
+
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ───────────────────────────────────────────────
+       RESET
+    ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--ink);
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; font-family: var(--font-body); border: none; }
+
+    /* ───────────────────────────────────────────────
+       SCROLLBAR
+    ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
+
+    /* ───────────────────────────────────────────────
+       CURSOR GLOW
+    ─────────────────────────────────────────────── */
+    #cursor-glow {
+      position: fixed;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(58,123,213,.13) 0%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      z-index: 0;
+      transition: opacity .3s;
+    }
+
+    /* ───────────────────────────────────────────────
+       NOISE TEXTURE OVERLAY
+    ─────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ───────────────────────────────────────────────
+       NAVIGATION
+    ─────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 5vw;
+      transition: background .4s, backdrop-filter .4s;
+    }
+    nav.scrolled {
+      background: rgba(5,12,24,.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(58,123,213,.15);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .nav-logo span {
+      color: var(--accent);
+    }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      position: relative;
+      transition: color .25s;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width .3s var(--ease-out);
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-cta {
+      padding: .55rem 1.4rem;
+      background: var(--accent);
+      color: var(--white);
+      border-radius: 100px;
+      font-size: .875rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      transition: background .25s, transform .2s;
+    }
+    .nav-cta:hover { background: var(--glow); transform: translateY(-1px); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      padding: 4px;
+    }
+    .hamburger span {
+      width: 24px; height: 2px;
+      background: var(--white);
+      border-radius: 2px;
+      transition: all .3s;
+    }
+
+    /* ───────────────────────────────────────────────
+       HERO
+    ─────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 9rem 5vw 5rem;
+      overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(58,123,213,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(58,123,213,.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+    .hero-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero-blob-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(26,58,94,.6), transparent 70%);
+      top: -150px; right: -100px;
+    }
+    .hero-blob-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(58,123,213,.25), transparent 70%);
+      bottom: 0; left: 10%;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .35rem .9rem;
+      border: 1px solid rgba(58,123,213,.35);
+      border-radius: 100px;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--glow);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1.8rem;
+      background: rgba(58,123,213,.08);
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--glow);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(1.4); }
+    }
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 7vw, 6.5rem);
+      font-weight: 800;
+      line-height: .95;
+      letter-spacing: -.03em;
+      margin-bottom: 1.6rem;
+    }
+    .hero-headline em {
+      font-style: normal;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--accent);
+    }
+    .hero-headline .accent-line {
+      display: block;
+      background: linear-gradient(135deg, var(--accent), var(--glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 2.8rem;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .85rem 2rem;
+      background: linear-gradient(135deg, var(--accent), var(--steel));
+      color: var(--white);
+      border-radius: 100px;
+      font-weight: 600;
+      font-size: .95rem;
+      transition: transform .25s, box-shadow .25s;
+      box-shadow: 0 0 0 rgba(58,123,213,0);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(58,123,213,.4);
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .85rem 2rem;
+      border: 1px solid rgba(58,123,213,.4);
+      color: var(--sky);
+      border-radius: 100px;
+      font-weight: 600;
+      font-size: .95rem;
+      background: rgba(58,123,213,.07);
+      transition: border-color .25s, background .25s, transform .25s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      background: rgba(58,123,213,.15);
+      transform: translateY(-2px);
+    }
+    .hero-stats {
+      position: absolute;
+      right: 5vw;
+      bottom: 4rem;
+      display: flex;
+      gap: 2.5rem;
+      z-index: 2;
+    }
+    .stat {
+      text-align: right;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .stat-num span { color: var(--accent); }
+    .stat-label {
+      font-size: .78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-top: .25rem;
+    }
+
+    /* ───────────────────────────────────────────────
+       SECTION WRAPPER
+    ─────────────────────────────────────────────── */
+    section { position: relative; z-index: 2; }
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 5vw;
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .8rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      margin-bottom: 1.2rem;
+    }
+    .section-sub {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 540px;
+      line-height: 1.7;
+    }
+    .section-divider {
+      width: 48px; height: 3px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      border-radius: 2px;
+      margin: 1.2rem 0 2.5rem;
+    }
+
+    /* ───────────────────────────────────────────────
+       SERVICES
+    ─────────────────────────────────────────────── */
+    #services { background: var(--navy); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5px;
+      background: rgba(58,123,213,.12);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 3.5rem;
+    }
+    .service-card {
+      background: var(--navy);
+      padding: 2.4rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: background .3s;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(58,123,213,.06), transparent);
+      opacity: 0;
+      transition: opacity .35s;
+    }
+    .service-card:hover { background: var(--deep); }
+    .service-card:hover::before { opacity: 1; }
+    .service-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(58,123,213,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(58,123,213,.2);
+      transition: background .3s, border-color .3s;
+    }
+    .service-card:hover .service-icon {
+      background: rgba(58,123,213,.3);
+      border-color: var(--accent);
+    }
+    .service-name {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+      letter-spacing: -.01em;
+    }
+    .service-desc {
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ───────────────────────────────────────────────
+       PORTFOLIO
+    ─────────────────────────────────────────────── */
+    #portfolio { background: var(--ink); }
+    .portfolio-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .portfolio-filters {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: .4rem 1rem;
+      border-radius: 100px;
+      font-size: .82rem;
+      font-weight: 500;
+      letter-spacing: .04em;
+      background: transparent;
+      border: 1px solid rgba(58,123,213,.25);
+      color: var(--muted);
+      transition: all .25s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--white);
+    }
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.2rem;
+    }
+    .portfolio-item {
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: var(--deep);
+      border: 1px solid rgba(58,123,213,.12);
+      cursor: pointer;
+      transition: transform .35s var(--ease-out), box-shadow .35s;
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .portfolio-item:nth-child(1) { grid-column: 1 / 8; }
+    .portfolio-item:nth-child(2) { grid-column: 8 / 13; }
+    .portfolio-item:nth-child(3) { grid-column: 1 / 6; }
+    .portfolio-item:nth-child(4) { grid-column: 6 / 10; }
+    .portfolio-item:nth-child(5) { grid-column: 10 / 13; aspect-ratio: 1; }
+    .portfolio-item:nth-child(6) { grid-column: 1 / 5; }
+    .portfolio-item:nth-child(7) { grid-column: 5 / 13; }
+    .portfolio-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(58,123,213,.3);
+    }
+    .portfolio-placeholder {
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: .75rem;
+      background: linear-gradient(135deg, var(--deep) 0%, var(--mid) 100%);
+    }
+    .portfolio-placeholder-icon {
+      font-size: 2.5rem;
+      opacity: .5;
+    }
+    .portfolio-placeholder-text {
+      font-size: .8rem;
+      color: var(--dim);
+      text-align: center;
+      padding: 0 1rem;
+    }
+    .portfolio-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(5,12,24,.95) 0%, rgba(5,12,24,.3) 60%, transparent 100%);
+      opacity: 0;
+      transition: opacity .35s;
+      display: flex;
+      align-items: flex-end;
+      padding: 1.5rem;
+    }
+    .portfolio-item:hover .portfolio-overlay { opacity: 1; }
+    .portfolio-meta { width: 100%; }
+    .portfolio-cat {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .3rem;
+    }
+    .portfolio-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .portfolio-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: rgba(58,123,213,.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      opacity: 0;
+      transition: opacity .3s, transform .3s;
+    }
+    .portfolio-item:hover .portfolio-play {
+      opacity: 1;
+      transform: translate(-50%,-50%) scale(1.08);
+    }
+
+
+
+    /* ───────────────────────────────────────────────
+       ABOUT
+    ─────────────────────────────────────────────── */
+    #about { background: var(--ink); }
+    .about-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+    .about-visual {
+      position: relative;
+    }
+    .about-photo-frame {
+      aspect-ratio: 4/5;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--mid), var(--deep));
+      border: 1px solid rgba(58,123,213,.2);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .about-photo-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      color: var(--dim);
+    }
+    .about-photo-placeholder span { font-size: 4rem; }
+    .about-photo-placeholder p { font-size: .85rem; }
+    .about-corner-badge {
+      position: absolute;
+      bottom: 1.5rem;
+      right: -1.5rem;
+      background: var(--navy);
+      border: 1px solid rgba(58,123,213,.2);
+      border-radius: 12px;
+      padding: 1rem 1.3rem;
+      text-align: center;
+    }
+    .badge-num {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--glow);
+      line-height: 1;
+    }
+    .badge-txt {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: .2rem;
+    }
+    .about-frame-accent {
+      position: absolute;
+      top: -1rem;
+      left: -1rem;
+      width: 80px; height: 80px;
+      border-top: 2px solid var(--accent);
+      border-left: 2px solid var(--accent);
+      border-radius: 4px 0 0 0;
+    }
+    .about-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      margin-top: 2rem;
+    }
+    .skill-chip {
+      padding: .35rem .9rem;
+      border-radius: 100px;
+      font-size: .8rem;
+      font-weight: 500;
+      background: rgba(58,123,213,.1);
+      border: 1px solid rgba(58,123,213,.2);
+      color: var(--sky);
+    }
+    .tools-row {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 1.8rem;
+    }
+    .tool-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .tool-item span { font-size: 1.1rem; }
+
+    /* ───────────────────────────────────────────────
+       PROCESS
+    ─────────────────────────────────────────────── */
+    #process { background: var(--navy); }
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0;
+      margin-top: 3.5rem;
+      position: relative;
+    }
+    .process-steps::before {
+      content: '';
+      position: absolute;
+      top: 2.2rem;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(58,123,213,.3), transparent);
+    }
+    .process-step {
+      padding: 0 1.5rem 2rem;
+      position: relative;
+    }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 800;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(58,123,213,.25);
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    .step-dot {
+      position: absolute;
+      top: 1.65rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(58,123,213,.2);
+    }
+    .step-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+    .step-desc {
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ───────────────────────────────────────────────
+       TESTIMONIALS
+    ─────────────────────────────────────────────── */
+    #testimonials { background: var(--ink); }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .testimonial-card {
+      background: var(--navy);
+      border: 1px solid rgba(58,123,213,.12);
+      border-radius: 16px;
+      padding: 2rem 1.8rem;
+      position: relative;
+      transition: border-color .3s, transform .3s;
+    }
+    .testimonial-card:hover {
+      border-color: rgba(58,123,213,.3);
+      transform: translateY(-3px);
+    }
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: 1.2rem;
+      right: 1.5rem;
+      font-family: var(--font-display);
+      font-size: 5rem;
+      line-height: 1;
+      color: rgba(58,123,213,.15);
+      font-weight: 800;
+    }
+    .stars {
+      color: #f5c842;
+      font-size: .85rem;
+      letter-spacing: .08em;
+      margin-bottom: 1rem;
+    }
+    .testimonial-text {
+      font-size: .95rem;
+      color: var(--sky);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+    .author-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--mid));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .author-name {
+      font-weight: 600;
+      font-size: .9rem;
+      line-height: 1.2;
+    }
+    .author-handle {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    /* ───────────────────────────────────────────────
+       PRICING
+    ─────────────────────────────────────────────── */
+    #pricing { background: var(--navy); }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3.5rem;
+    }
+    .pricing-card {
+      border-radius: 18px;
+      padding: 2.2rem 1.8rem;
+      border: 1px solid rgba(58,123,213,.15);
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .pricing-card.popular {
+      border-color: var(--accent);
+      background: var(--deep);
+    }
+    .pricing-card:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(0,0,0,.4); }
+    .popular-badge {
+      position: absolute;
+      top: 1rem;
+      right: -2.5rem;
+      background: var(--accent);
+      color: var(--white);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .3rem 2.8rem;
+      transform: rotate(45deg);
+    }
+    .plan-name {
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .8rem;
+    }
+    .plan-price {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1;
+      margin-bottom: .3rem;
+    }
+    .plan-price sup {
+      font-size: 1.3rem;
+      font-weight: 600;
+      vertical-align: top;
+      margin-top: .5rem;
+    }
+    .plan-period {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 1.8rem;
+    }
+    .plan-features {
+      list-style: none;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .plan-features li {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      font-size: .9rem;
+      color: var(--sky);
+    }
+    .plan-features li::before {
+      content: '✓';
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(58,123,213,.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .7rem;
+      color: var(--glow);
+      flex-shrink: 0;
+    }
+    .plan-btn {
+      width: 100%;
+      padding: .8rem;
+      border-radius: 100px;
+      font-size: .9rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      transition: all .25s;
+    }
+    .plan-btn.outline {
+      border: 1px solid rgba(58,123,213,.3);
+      background: transparent;
+      color: var(--sky);
+    }
+    .plan-btn.outline:hover {
+      border-color: var(--accent);
+      background: rgba(58,123,213,.12);
+    }
+    .plan-btn.filled {
+      background: linear-gradient(135deg, var(--accent), var(--steel));
+      color: var(--white);
+    }
+    .plan-btn.filled:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    /* ───────────────────────────────────────────────
+       FAQ
+    ─────────────────────────────────────────────── */
+    #faq { background: var(--ink); }
+    .faq-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .faq-list {
+      margin-top: 0;
+    }
+    .faq-item {
+      border-bottom: 1px solid rgba(58,123,213,.12);
+    }
+    .faq-q {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 0;
+      background: none;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      font-weight: 600;
+      text-align: left;
+      gap: 1rem;
+      transition: color .25s;
+    }
+    .faq-q:hover { color: var(--sky); }
+    .faq-icon {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(58,123,213,.12);
+      border: 1px solid rgba(58,123,213,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: .8rem;
+      transition: background .25s, transform .3s;
+    }
+    .faq-item.open .faq-icon {
+      background: var(--accent);
+      transform: rotate(45deg);
+    }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s var(--ease-out);
+    }
+    .faq-a p {
+      padding-bottom: 1.4rem;
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ───────────────────────────────────────────────
+       CONTACT
+    ─────────────────────────────────────────────── */
+    #contact { background: var(--navy); }
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .contact-info {
+      padding-top: 1rem;
+    }
+    .contact-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .contact-link-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      border: 1px solid rgba(58,123,213,.15);
+      border-radius: 12px;
+      background: rgba(58,123,213,.05);
+      transition: border-color .25s, background .25s;
+    }
+    .contact-link-row:hover {
+      border-color: rgba(58,123,213,.35);
+      background: rgba(58,123,213,.1);
+    }
+    .contact-link-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(58,123,213,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .contact-link-label {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: .15rem;
+    }
+    .contact-link-value {
+      font-size: .92rem;
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    /* CHAT BUTTON */
+    .chat-cta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding: 1.4rem 1.6rem;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(58,123,213,.25), rgba(26,58,94,.4));
+      border: 1px solid rgba(58,123,213,.35);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .chat-cta:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(58,123,213,.25);
+    }
+    .chat-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .chat-text strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .2rem;
+    }
+    .chat-text p {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .chat-arrow {
+      margin-left: auto;
+      font-size: 1.2rem;
+      color: var(--muted);
+      transition: transform .25s;
+    }
+    .chat-cta:hover .chat-arrow { transform: translateX(4px); }
+
+    /* FORM */
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .form-group label {
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: .85rem 1.1rem;
+      background: rgba(58,123,213,.06);
+      border: 1px solid rgba(58,123,213,.2);
+      border-radius: 10px;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      transition: border-color .25s, background .25s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--accent);
+      background: rgba(58,123,213,.1);
+    }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-submit {
+      padding: .95rem 2.2rem;
+      background: linear-gradient(135deg, var(--accent), var(--steel));
+      color: var(--white);
+      border-radius: 100px;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      align-self: flex-start;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .form-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(58,123,213,.4);
+    }
+
+    /* ───────────────────────────────────────────────
+       FOOTER
+    ─────────────────────────────────────────────── */
+    footer {
+      background: var(--ink);
+      border-top: 1px solid rgba(58,123,213,.1);
+      padding: 3rem 5vw;
+      position: relative;
+      z-index: 2;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy {
+      font-size: .82rem;
+      color: var(--dim);
+    }
+    .footer-socials {
+      display: flex;
+      gap: .8rem;
+    }
+    .footer-social {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: rgba(58,123,213,.1);
+      border: 1px solid rgba(58,123,213,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .95rem;
+      transition: background .25s, border-color .25s;
+    }
+    .footer-social:hover {
+      background: rgba(58,123,213,.2);
+      border-color: var(--accent);
+    }
+
+    /* ───────────────────────────────────────────────
+       FLOATING CHAT BUTTON
+    ─────────────────────────────────────────────── */
+    .float-chat {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 99;
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(37,211,102,.4);
+      transition: transform .25s, box-shadow .25s;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+    }
+    .float-chat:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 32px rgba(37,211,102,.5);
+    }
+    .float-chat-pulse {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #25D366;
+      animation: chat-pulse 2s infinite;
+    }
+    @keyframes chat-pulse {
+      0% { transform: scale(1); opacity: .6; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* ───────────────────────────────────────────────
+       SCROLL REVEAL
+    ─────────────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .7s var(--ease-out), transform .7s var(--ease-out);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+    .reveal-delay-4 { transition-delay: .4s; }
+
+    /* ───────────────────────────────────────────────
+       RESPONSIVE
+    ─────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .hero-stats { position: static; margin-top: 3rem; justify-content: flex-start; }
+      .about-layout, .contact-layout, .faq-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+      .about-corner-badge { right: 1rem; }
+      .portfolio-item:nth-child(n) { grid-column: 1 / -1; }
+      .form-row { grid-template-columns: 1fr; }
+      .process-steps::before { display: none; }
+    }
+    @media (max-width: 600px) {
+      .hero-headline { font-size: clamp(2.4rem, 10vw, 3.5rem); }
+      .hero-actions { flex-direction: column; }
+      .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+      .section-inner { padding: 4rem 5vw; }
+    }
+
+    /* Mobile nav drawer */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,12,24,.97);
+      z-index: 99;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: color .2s;
+    }
+    .mobile-nav a:hover { color: var(--white); }
+    .mobile-nav-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 5vw;
+      font-size: 2rem;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cursor glow -->
+<div id="cursor-glow"></div>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Farhan<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#portfolio">Portfolio</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Let's Work →</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile nav -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" id="mobileClose">✕</button>
+  <a href="#services" class="mobile-link">Services</a>
+  <a href="#portfolio" class="mobile-link">Portfolio</a>
+  <a href="#about" class="mobile-link">About</a>
+  <a href="#pricing" class="mobile-link">Pricing</a>
+  <a href="#faq" class="mobile-link">FAQ</a>
+  <a href="#contact" class="mobile-link">Contact</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<section class="hero" id="home">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow reveal">Available for new projects</div>
+    <h1 class="hero-headline reveal reveal-delay-1">
+      <em>Crafting</em> Stories<br>
+      <span class="accent-line">Frame by Frame.</span>
+    </h1>
+    <p class="hero-sub reveal reveal-delay-2">
+      YouTube video editor &amp; graphic designer turning raw footage and ideas into compelling content that grows channels and builds brands.
+    </p>
+    <div class="hero-actions reveal reveal-delay-3">
+      <a href="#portfolio" class="btn-primary">View My Work ↓</a>
+      <a href="#contact" class="btn-secondary">💬 Let's Chat</a>
+    </div>
+  </div>
+
+  <div class="hero-stats reveal reveal-delay-4">
+    <div class="stat">
+      <div class="stat-num">50<span>+</span></div>
+      <div class="stat-label">Projects Done</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">30<span>+</span></div>
+      <div class="stat-label">Happy Clients</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3<span>yrs</span></div>
+      <div class="stat-label">Experience</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SERVICES
+═══════════════════════════════════════════ -->
+<section id="services">
+  <div class="section-inner">
+    <span class="section-tag reveal">What I Do</span>
+    <h2 class="section-title reveal reveal-delay-1">Services Built for<br>Content Creators</h2>
+    <div class="section-divider reveal reveal-delay-2"></div>
+
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <div class="service-icon">🎬</div>
+        <div class="service-name">YouTube Video Editing</div>
+        <p class="service-desc">Engaging cuts, transitions, color grading, and effects that keep viewers watching till the end. Optimized for retention.</p>
+      </div>
+      <div class="service-card reveal reveal-delay-1">
+        <div class="service-icon">🎨</div>
+        <div class="service-name">Thumbnail Design</div>
+        <p class="service-desc">Eye-catching, high-CTR thumbnails crafted with psychology-driven design that make people stop scrolling and click.</p>
+      </div>
+      <div class="service-card reveal reveal-delay-3">
+        <div class="service-icon">📐</div>
+        <div class="service-name">Graphic Design</div>
+        <p class="service-desc">Channel art, social media graphics, brand assets, and visual identity systems tailored for YouTube creators.</p>
+      </div>
+      <div class="service-card reveal reveal-delay-1">
+        <div class="service-icon">🎙️</div>
+        <div class="service-name">Podcast Editing</div>
+        <p class="service-desc">Audio cleanup, noise removal, music, and visual podcast formats for YouTube and multi-platform publishing.</p>
+      </div>
+      <div class="service-card reveal reveal-delay-2">
+        <div class="service-icon">📱</div>
+        <div class="service-name">Shorts & Reels</div>
+        <p class="service-desc">Vertical-format edits optimized for YouTube Shorts, Instagram Reels, and TikTok — built for viral potential.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PORTFOLIO
+═══════════════════════════════════════════ -->
+<section id="portfolio">
+  <div class="section-inner">
+    <div class="portfolio-header">
+      <div>
+        <span class="section-tag reveal">My Work</span>
+        <h2 class="section-title reveal reveal-delay-1">Selected Projects</h2>
+      </div>
+      <div class="portfolio-filters reveal">
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">YouTube</button>
+        <button class="filter-btn">Graphics</button>
+
+      </div>
+    </div>
+
+    <div class="portfolio-grid">
+      <!-- PASTE YOUR VIDEO/IMAGE EMBEDS INSIDE THESE .portfolio-item DIVS -->
+      <div class="portfolio-item reveal">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">🎬</div>
+          <div class="portfolio-placeholder-text">Paste your YouTube embed or image here</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">YouTube Edit</div>
+            <div class="portfolio-title">Project Title Here</div>
+          </div>
+        </div>
+        <div class="portfolio-play">▶</div>
+      </div>
+      <div class="portfolio-item reveal reveal-delay-1">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">🎨</div>
+          <div class="portfolio-placeholder-text">Thumbnail design showcase</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">Thumbnail</div>
+            <div class="portfolio-title">Thumbnail Design</div>
+          </div>
+        </div>
+        <div class="portfolio-play">▶</div>
+      </div>
+
+      <div class="portfolio-item reveal reveal-delay-1">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">📱</div>
+          <div class="portfolio-placeholder-text">Short-form content</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">Shorts</div>
+            <div class="portfolio-title">Viral Short Edit</div>
+          </div>
+        </div>
+        <div class="portfolio-play">▶</div>
+      </div>
+      <div class="portfolio-item reveal reveal-delay-2">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">📐</div>
+          <div class="portfolio-placeholder-text">Brand assets</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">Branding</div>
+            <div class="portfolio-title">Channel Branding</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-item reveal">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">🎙️</div>
+          <div class="portfolio-placeholder-text">Podcast visual format</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">Podcast</div>
+            <div class="portfolio-title">Podcast Edit</div>
+          </div>
+        </div>
+        <div class="portfolio-play">▶</div>
+      </div>
+      <div class="portfolio-item reveal reveal-delay-1">
+        <div class="portfolio-placeholder">
+          <div class="portfolio-placeholder-icon">🎬</div>
+          <div class="portfolio-placeholder-text">Long-form video edit</div>
+        </div>
+        <div class="portfolio-overlay">
+          <div class="portfolio-meta">
+            <div class="portfolio-cat">Long-form</div>
+            <div class="portfolio-title">Documentary Edit</div>
+          </div>
+        </div>
+        <div class="portfolio-play">▶</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ═══════════════════════════════════════════
+     ABOUT
+═══════════════════════════════════════════ -->
+<section id="about">
+  <div class="section-inner">
+    <div class="about-layout">
+      <div class="about-visual reveal">
+        <div class="about-frame-accent"></div>
+        <div class="about-photo-frame">
+          <!-- PASTE YOUR PHOTO HERE: replace this div with <img src="your-photo.jpg" alt="Farhan"> -->
+          <div class="about-photo-placeholder">
+            <span>📸</span>
+            <p>Add your photo here</p>
+          </div>
+        </div>
+        <div class="about-corner-badge">
+          <div class="badge-num">3+</div>
+          <div class="badge-txt">Years<br>of Experience</div>
+        </div>
+      </div>
+
+      <div class="about-text reveal reveal-delay-1">
+        <span class="section-tag">About Me</span>
+        <h2 class="section-title">Hi, I'm Farhan —<br>Your Editor.</h2>
+        <div class="section-divider"></div>
+        <p style="color: var(--sky); line-height: 1.75; margin-bottom: 1.2rem;">
+          I'm a passionate YouTube video editor and graphic designer dedicated to helping content creators grow their presence with stunning, high-retention edits and eye-catching visuals.
+        </p>
+        <p style="color: var(--muted); line-height: 1.75; font-size: .95rem; margin-bottom: 1.8rem;">
+          Whether you need a cinematic vlog, an educational explainer, a podcast in video format, or a complete visual brand — I bring the technical skill and creative eye to make it look exceptional. Fast turnarounds. Clear communication. Results that speak.
+        </p>
+
+        <div class="about-skills">
+          <span class="skill-chip">Premiere Pro</span>
+          <span class="skill-chip">After Effects</span>
+          <span class="skill-chip">Photoshop</span>
+          <span class="skill-chip">Illustrator</span>
+          <span class="skill-chip">DaVinci Resolve</span>
+          <span class="skill-chip">Color Grading</span>
+          <span class="skill-chip">Figma</span>
+        </div>
+
+        <div class="tools-row">
+          <div class="tool-item"><span>🎞️</span> Long-form editing</div>
+          <div class="tool-item"><span>📱</span> Short-form content</div>
+          <div class="tool-item"><span>🖼️</span> Graphic design</div>
+          <div class="tool-item"><span>⚡</span> Fast delivery</div>
+        </div>
+
+        <div style="margin-top: 2.2rem;">
+          <a href="#contact" class="btn-primary">Work With Me →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PROCESS
+═══════════════════════════════════════════ -->
+<section id="process">
+  <div class="section-inner">
+    <span class="section-tag reveal">How It Works</span>
+    <h2 class="section-title reveal reveal-delay-1">My Simple 4-Step Process</h2>
+    <p class="section-sub reveal reveal-delay-2">From your raw footage to a publish-ready video — a clear, stress-free workflow every time.</p>
+
+    <div class="process-steps">
+      <div class="process-step reveal">
+        <div class="step-num">01</div>
+        <div class="step-dot"></div>
+        <div class="step-name">Brief & Files</div>
+        <p class="step-desc">You share your raw footage, references, and creative direction. I'll ask the right questions to understand your vision completely.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-1">
+        <div class="step-num">02</div>
+        <div class="step-dot"></div>
+        <div class="step-name">First Cut</div>
+        <p class="step-desc">I deliver a first edit with structure, pacing, and style locked in — for your initial review and feedback.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-2">
+        <div class="step-num">03</div>
+        <div class="step-dot"></div>
+        <div class="step-name">Revisions</div>
+        <p class="step-desc">We refine based on your notes. Up to 3 revision rounds included — until you're genuinely happy with every frame.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-3">
+        <div class="step-num">04</div>
+        <div class="step-dot"></div>
+        <div class="step-name">Final Delivery</div>
+        <p class="step-desc">Export in your preferred format. Clean files delivered via Google Drive, WeTransfer, or your platform of choice.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     TESTIMONIALS
+═══════════════════════════════════════════ -->
+<section id="testimonials">
+  <div class="section-inner">
+    <span class="section-tag reveal">What Clients Say</span>
+    <h2 class="section-title reveal reveal-delay-1">Real Results, Real Words</h2>
+    <div class="section-divider reveal reveal-delay-2"></div>
+    <!-- REPLACE TESTIMONIAL CONTENT WITH YOUR REAL CLIENT REVIEWS -->
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Farhan's editing took my channel to the next level. The retention on my videos went up by 40% after working with him. Highly recommend!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">A</div>
+          <div>
+            <div class="author-name">Add Client Name</div>
+            <div class="author-handle">@youtube_handle</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-1">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Fast, professional, and always delivers exactly what I envision. The thumbnails he designed doubled my click-through rate within a week."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">B</div>
+          <div>
+            <div class="author-name">Add Client Name</div>
+            <div class="author-handle">@instagram_handle</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-2">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"I've worked with multiple editors and Farhan is by far the best. He understands the platform, the audience, and the content perfectly."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">C</div>
+          <div>
+            <div class="author-name">Add Client Name</div>
+            <div class="author-handle">@channel_name</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PRICING
+═══════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="section-inner">
+    <span class="section-tag reveal">Pricing</span>
+    <h2 class="section-title reveal reveal-delay-1">Transparent, Simple Pricing</h2>
+    <p class="section-sub reveal reveal-delay-2">No hidden fees. No surprises. Just quality work at a fair rate. Custom quotes available for larger projects.</p>
+    <div class="section-divider reveal reveal-delay-3"></div>
+
+    <!-- UPDATE PRICES AND FEATURES TO MATCH YOUR REAL RATES -->
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price"><sup>$</sup>XX</div>
+        <div class="plan-period">per video / up to 10 min</div>
+        <ul class="plan-features">
+          <li>Basic cuts &amp; transitions</li>
+          <li>Color correction</li>
+          <li>Background music</li>
+          <li>1 revision round</li>
+          <li>5-day delivery</li>
+        </ul>
+        <button class="plan-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get Started</button>
+      </div>
+      <div class="pricing-card popular reveal reveal-delay-1">
+        <div class="popular-badge">Most Popular</div>
+        <div class="plan-name">Creator</div>
+        <div class="plan-price"><sup>$</sup>XX</div>
+        <div class="plan-period">per video / up to 20 min</div>
+        <ul class="plan-features">
+          <li>Full cinematic edit</li>
+          <li>Advanced transitions &amp; effects</li>
+          <li>Color grading</li>
+          <li>Thumbnail included</li>
+          <li>3 revision rounds</li>
+          <li>3-day delivery</li>
+        </ul>
+        <button class="plan-btn filled" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get Started</button>
+      </div>
+      <div class="pricing-card reveal reveal-delay-2">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><sup>$</sup>XX</div>
+        <div class="plan-period">per video / up to 45 min</div>
+        <ul class="plan-features">
+          <li>Everything in Creator</li>
+          <li>Custom intro &amp; outro</li>
+          <li>Advanced VFX</li>
+          <li>Shorts version included</li>
+          <li>Unlimited revisions</li>
+          <li>Priority 48hr delivery</li>
+        </ul>
+        <button class="plan-btn outline" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get Started</button>
+      </div>
+    </div>
+    <p style="text-align:center; color:var(--muted); font-size:.875rem; margin-top:2rem;">
+      Need something custom? <a href="#contact" style="color:var(--accent);">Let's talk →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FAQ
+═══════════════════════════════════════════ -->
+<section id="faq">
+  <div class="section-inner">
+    <div class="faq-layout">
+      <div class="reveal">
+        <span class="section-tag">FAQ</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="section-divider"></div>
+        <p style="color:var(--muted); font-size:.9rem; line-height:1.7;">
+          Still have questions? Reach out on WhatsApp or via the contact form — I'll reply within a few hours.
+        </p>
+        <a href="#contact" class="btn-secondary" style="display:inline-flex; margin-top:1.5rem;">Ask a Question →</a>
+      </div>
+      <div class="faq-list reveal reveal-delay-1">
+        <!-- ADD / EDIT YOUR FAQ QUESTIONS HERE -->
+        <div class="faq-item">
+          <button class="faq-q">What information do you need to start? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>Just share your raw footage files (via Google Drive, Dropbox, or WeTransfer), a brief about the video's goal, any references you like, and your preferred style. I'll take it from there.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">How long does delivery take? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>Standard turnaround is 3–5 business days depending on the package. Rush 24–48 hour delivery is available for an additional fee. I'll always confirm the exact timeline before starting.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">What editing software do you use? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>I primarily use Adobe Premiere Pro, After Effects, and DaVinci Resolve for video editing. For graphic design, I use Photoshop, Illustrator, and Figma. All exports are in your preferred format.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">How many revisions do I get? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>Starter includes 1 revision, Creator includes 3 revisions, and Pro includes unlimited revisions. Most clients are happy by the second revision. Additional revision rounds on Starter/Creator packages are available for a small fee.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Do you offer monthly retainer packages? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>Yes! If you need regular editing (weekly or bi-weekly videos), I offer discounted monthly retainer packages. Contact me to discuss a custom arrangement that fits your upload schedule and budget.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">What payment methods do you accept? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>I accept PayPal, bank transfer, and other common payment methods. A 50% deposit is required before starting, with the remainder due on delivery. For monthly retainers, payment is due at the start of each month.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Can you help with channel branding too? <span class="faq-icon">+</span></button>
+          <div class="faq-a"><p>Absolutely. I offer complete channel branding packages including logo design, banner art, thumbnail templates, intro/outro animations, and consistent color grading to give your channel a professional, unified look.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CONTACT
+═══════════════════════════════════════════ -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="contact-layout">
+      <div class="contact-info reveal">
+        <span class="section-tag">Get In Touch</span>
+        <h2 class="section-title">Let's Create Something Amazing</h2>
+        <div class="section-divider"></div>
+        <p style="color:var(--muted); line-height:1.7; margin-bottom:1.5rem;">
+          Ready to elevate your content? Drop a message and let's talk about your next project. I typically respond within a few hours.
+        </p>
+
+        <!-- SOCIAL / CONTACT LINKS — UPDATE HREF VALUES -->
+        <div class="contact-links">
+          <a href="mailto:farhan@email.com" class="contact-link-row">
+            <div class="contact-link-icon">✉️</div>
+            <div>
+              <div class="contact-link-label">Email</div>
+              <div class="contact-link-value">farhan@email.com</div>
+            </div>
+          </a>
+          <a href="https://youtube.com/@farhaneditor" target="_blank" class="contact-link-row">
+            <div class="contact-link-icon">🎬</div>
+            <div>
+              <div class="contact-link-label">YouTube</div>
+              <div class="contact-link-value">@farhaneditor</div>
+            </div>
+          </a>
+          <a href="https://instagram.com/farhaneditor" target="_blank" class="contact-link-row">
+            <div class="contact-link-icon">📸</div>
+            <div>
+              <div class="contact-link-label">Instagram</div>
+              <div class="contact-link-value">@farhaneditor</div>
+            </div>
+          </a>
+        </div>
+
+        <!-- WHATSAPP CHAT BUTTON — UPDATE YOUR NUMBER -->
+        <a href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hi+Farhan!+I'm+interested+in+your+editing+services." target="_blank" class="chat-cta">
+          <div class="chat-icon">💬</div>
+          <div class="chat-text">
+            <strong>Chat on WhatsApp</strong>
+            <p>Fastest way to reach me — usually replies within 1hr</p>
+          </div>
+          <span class="chat-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="reveal reveal-delay-1">
+        <div class="contact-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Your Name</label>
+              <input type="text" placeholder="John Doe" />
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" placeholder="john@email.com" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Service Needed</label>
+            <select>
+              <option value="" disabled selected>Select a service…</option>
+              <option>YouTube Video Editing</option>
+              <option>Thumbnail Design</option>
+              <option>Channel Branding</option>
+              <option>Shorts / Reels</option>
+              <option>Podcast Editing</option>
+              <option>Custom Package</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Budget Range</label>
+            <select>
+              <option value="" disabled selected>Select budget…</option>
+              <option>Under $50</option>
+              <option>$50 – $100</option>
+              <option>$100 – $250</option>
+              <option>$250 – $500</option>
+              <option>$500+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tell me about your project</label>
+            <textarea placeholder="Describe your video, style references, deadline, any special requirements…"></textarea>
+          </div>
+          <button type="button" class="form-submit">Send Message →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">Farhan<span>.</span> Editor</div>
+    <div class="footer-copy">© 2025 Farhan Editor. Built with ❤️ for creators.</div>
+    <!-- REPLACE HREF WITH YOUR REAL SOCIAL LINKS -->
+    <div class="footer-socials">
+      <a href="https://youtube.com/@farhaneditor" target="_blank" class="footer-social" title="YouTube">▶</a>
+      <a href="https://instagram.com/farhaneditor" target="_blank" class="footer-social" title="Instagram">📸</a>
+      <a href="https://wa.me/YOUR_NUMBER" target="_blank" class="footer-social" title="WhatsApp">💬</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     FLOATING WHATSAPP BUTTON
+═══════════════════════════════════════════ -->
+<a href="https://wa.me/YOUR_WHATSAPP_NUMBER?text=Hi+Farhan!+I+want+to+discuss+a+project." target="_blank" class="float-chat" title="Chat on WhatsApp">
+  <div class="float-chat-pulse"></div>
+  💬
+</a>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════ -->
+<script>
+  /* ─── Cursor glow ─── */
+  const glow = document.getElementById('cursor-glow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top  = e.clientY + 'px';
+  });
+
+  /* ─── Navbar scroll ─── */
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  /* ─── Mobile nav ─── */
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  const mobileClose = document.getElementById('mobileClose');
+  hamburger.addEventListener('click', () => mobileNav.classList.add('open'));
+  mobileClose.addEventListener('click', () => mobileNav.classList.remove('open'));
+  document.querySelectorAll('.mobile-link').forEach(l => {
+    l.addEventListener('click', () => mobileNav.classList.remove('open'));
+  });
+
+  /* ─── Scroll reveal ─── */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* ─── Portfolio filter ─── */
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  /* ─── FAQ accordion ─── */
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const answer = item.querySelector('.faq-a');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o => {
+        o.classList.remove('open');
+        o.querySelector('.faq-a').style.maxHeight = null;
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+      }
+    });
+  });
+
+  /* ─── Contact form (basic submission feedback) ─── */
+  document.querySelector('.form-submit').addEventListener('click', function() {
+    const btn = this;
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = '✓ Message Sent!';
+      btn.style.background = 'linear-gradient(135deg, #1a7a4a, #0d5c38)';
+      setTimeout(() => {
+        btn.textContent = 'Send Message →';
+        btn.style.background = '';
+        btn.disabled = false;
+      }, 3000);
+    }, 1200);
+  });
+</script>
+
+</body>
+</html>
